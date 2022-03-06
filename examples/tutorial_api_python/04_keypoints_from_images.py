@@ -61,7 +61,12 @@ try:
 
     # Read frames on directory
     imagePaths = op.get_images_on_directory(args[0].image_dir);
-    #text_path = imagePaths[0]
+    # hier muss noch mit len(imagePaths) heruasgefunden werden ob 21 bilder vorhanden sind und wenn nicht 
+    # müssen feheldne mit o Werten ergänzt werden.
+    print(imagePaths)
+    if len(imagePaths) != 21:
+        print("Bild fehlt")
+        
     start = time.time()
     list_keypoints = []
     # Process and display images
