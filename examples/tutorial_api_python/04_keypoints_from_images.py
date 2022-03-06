@@ -66,7 +66,7 @@ try:
     print(imagePaths)
     if len(imagePaths) != 21:
         print("Bild fehlt")
-        
+
     start = time.time()
     list_keypoints = []
     # Process and display images
@@ -75,7 +75,9 @@ try:
         imageToProcess = cv2.imread(imagePath)
         datum.cvInputData = imageToProcess
         opWrapper.emplaceAndPop(op.VectorDatum([datum]))
+        print("PAth: ", imagePath)
         print("Daetnytp: ", type(datum.poseKeypoints))
+        # fehlt noch ein Teil, der prüt ob nur eine Pose gefunden wird
         if datum.poseKeypoints is None:
             print("BP2")
             keypoints = np.zeros(shape=(1,1,75))
@@ -90,6 +92,7 @@ try:
 
         #line = str(keypoint_list)
         #print("Line: ", line)
+        
         print("Body keypoints: \n" + str(datum.poseKeypoints))
         #with open('/content.gdrive/MyDrive/Fotos/OP/Test/test.txt', 'a') as writefile:
             #writefile.write(line)
