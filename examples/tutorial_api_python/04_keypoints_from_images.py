@@ -6,6 +6,7 @@ import os
 from sys import platform
 import argparse
 import time
+import numpy as np
 
 try:
     # Import Openpose (Windows/Ubuntu/OSX)
@@ -60,22 +61,44 @@ try:
 
     # Read frames on directory
     imagePaths = op.get_images_on_directory(args[0].image_dir);
+    #text_path = imagePaths[0]
     start = time.time()
-
+    list_keypoints = []
     # Process and display images
     for imagePath in imagePaths:
         datum = op.Datum()
         imageToProcess = cv2.imread(imagePath)
         datum.cvInputData = imageToProcess
         opWrapper.emplaceAndPop(op.VectorDatum([datum]))
+        print("Daetnytp: ", type(datum.poseKeypoints))
+        if datum.poseKeypoints is None:
+            print("BP2")
+            keypoints = np.zeros(shape=(1,1,75))
+            print(keypoints)
+        else:
+            print("Shape: ", datum.poseKeypoints.shape)
+            keypoints = np.reshape(datum.poseKeypoints, [1, 1, 75])
+        print("Shape_new: ", keypoints.shape)
+        keypoint_list = keypoints.tolist()
+        print("list: ", keypoint_list)
+        list_keypoints.append(keypoint_list)
 
+        #line = str(keypoint_list)
+        #print("Line: ", line)
         print("Body keypoints: \n" + str(datum.poseKeypoints))
+        #with open('/content.gdrive/MyDrive/Fotos/OP/Test/test.txt', 'a') as writefile:
+            #writefile.write(line)
+            #writefile.write(('%g ' * len(line)).rstrip() % line  +'\n')
 
         if not args[0].no_display:
             cv2.imshow("OpenPose 1.7.0 - Tutorial Python API", datum.cvOutputData)
             key = cv2.waitKey(15)
             if key == 27: break
-
+    text_path = os.path.dirname(imagePath) + '/keypoints.txt'
+    print("Path: " , text_path)
+    line = str(list_keypoints)
+    with open(text_path, 'a') as writefile:
+        writefile.write(line)
     end = time.time()
     print("OpenPose demo successfully finished. Total time: " + str(end - start) + " seconds")
 except Exception as e:
