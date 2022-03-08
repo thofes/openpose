@@ -7,6 +7,7 @@ from sys import platform
 import argparse
 import time
 import numpy as np
+from numpy.core.fromnumeric import shape
 
 try:
     # Import Openpose (Windows/Ubuntu/OSX)
@@ -61,11 +62,11 @@ try:
 
     # Read frames on directory
     imagePaths = op.get_images_on_directory(args[0].image_dir);
-    # hier muss noch mit len(imagePaths) heruasgefunden werden ob 21 bilder vorhanden sind und wenn nicht 
-    # müssen feheldne mit o Werten ergänzt werden.
+    
     print(imagePaths)
-    if len(imagePaths) != 21:
-        print("Bild fehlt")
+
+
+    
 
     start = time.time()
     list_keypoints = []
@@ -77,14 +78,24 @@ try:
         opWrapper.emplaceAndPop(op.VectorDatum([datum]))
         print("PAth: ", imagePath)
         print("Daetnytp: ", type(datum.poseKeypoints))
+
+
         # fehlt noch ein Teil, der prüt ob nur eine Pose gefunden wird
-        if datum.poseKeypoints is None:
+
+        # wenn keine Pose im Bild etdeckt wird
+        if datum.poseKeypoints is None: 
             print("BP2")
-            keypoints = np.zeros(shape=(1,1,75))
+            keypoints = np.zeros(shape=(75))
             print(keypoints)
+        # wenn mehrere Posen im Bild enteckt werden
+        elif datum.poseKeypoints.shape != (1,25,3):
+            keypoints_0 = datum.poseKeypoints[0,:,:]
+            keypoints = np.reshape(keypoints_0, [75])
+            print("aha: ", keypoints.shape )
+        # Normalfall
         else:
             print("Shape: ", datum.poseKeypoints.shape)
-            keypoints = np.reshape(datum.poseKeypoints, [1, 1, 75])
+            keypoints = np.reshape(datum.poseKeypoints, [75])
         print("Shape_new: ", keypoints.shape)
         keypoint_list = keypoints.tolist()
         print("list: ", keypoint_list)
@@ -104,6 +115,33 @@ try:
             if key == 27: break
     text_path = os.path.dirname(imagePath) + '/keypoints.txt'
     print("Path: " , text_path)
+    print("list: ", list_keypoints)
+
+    
+    # check missing pics from YOLO and create empty list
+    path_list = []
+    if len(imagePaths) != 21:
+        print("Bild fehlt")
+        for i in imagePaths:
+            if i[-6] is '/':
+                x = i[-5]
+            else:
+                x = i[-6:-4]
+            path_list.append(int(x))
+    #fill the list for missing pics with empty arrays
+        print("Path_list: ", path_list)
+        missing = [ele for ele in range(22) if ele not in path_list]
+        missing_keypoints = np.zeros(shape=(75))
+        keypoint_missing = missing_keypoints.tolist()
+        missing.remove(0)
+        print("missing :", missing)
+        
+        for index in missing:
+            print("index: ", index-1)
+            print("keypoints: ", keypoint_missing)
+            list_keypoints.insert(index-1, keypoint_missing)
+        print("list: ", list_keypoints)
+
     line = str(list_keypoints)
     with open(text_path, 'a') as writefile:
         writefile.write(line)
