@@ -8,6 +8,7 @@ import argparse
 import time
 import numpy as np
 from numpy.core.fromnumeric import shape
+import json
 
 try:
     # Import Openpose (Windows/Ubuntu/OSX)
@@ -70,58 +71,52 @@ try:
 
     start = time.time()
     list_keypoints = []
+    keypoints_array = np.empty(0)
     # Process and display images
     for imagePath in imagePaths:
         datum = op.Datum()
         imageToProcess = cv2.imread(imagePath)
         datum.cvInputData = imageToProcess
         opWrapper.emplaceAndPop(op.VectorDatum([datum]))
-        print("PAth: ", imagePath)
-        print("Daetnytp: ", type(datum.poseKeypoints))
 
 
-        # fehlt noch ein Teil, der prüt ob nur eine Pose gefunden wird
+
 
         # wenn keine Pose im Bild etdeckt wird
         if datum.poseKeypoints is None: 
-            print("BP2")
             keypoints = np.zeros(shape=(75))
-            print(keypoints)
+            keypoints_numpy = np.zeros(shape=(75))
         # wenn mehrere Posen im Bild enteckt werden
         elif datum.poseKeypoints.shape != (1,25,3):
             keypoints_0 = datum.poseKeypoints[0,:,:]
             keypoints = np.reshape(keypoints_0, [75])
-            print("aha: ", keypoints.shape )
+            keypoints_numpy = np.reshape(keypoints_0, [75])
         # Normalfall
         else:
-            print("Shape: ", datum.poseKeypoints.shape)
             keypoints = np.reshape(datum.poseKeypoints, [75])
-        print("Shape_new: ", keypoints.shape)
+            keypoints_numpy = np.reshape(datum.poseKeypoints, [75])
+        
+        #für Verwendung mit Array
+        keypoints_array = np.append(keypoints_array, keypoints_numpy)
+        #für Verwendung mit List
         keypoint_list = keypoints.tolist()
-        print("list: ", keypoint_list)
         list_keypoints.append(keypoint_list)
 
-        #line = str(keypoint_list)
-        #print("Line: ", line)
         
-        print("Body keypoints: \n" + str(datum.poseKeypoints))
-        #with open('/content.gdrive/MyDrive/Fotos/OP/Test/test.txt', 'a') as writefile:
-            #writefile.write(line)
-            #writefile.write(('%g ' * len(line)).rstrip() % line  +'\n')
+        #print("Body keypoints: \n" + str(datum.poseKeypoints))
 
         if not args[0].no_display:
             cv2.imshow("OpenPose 1.7.0 - Tutorial Python API", datum.cvOutputData)
             key = cv2.waitKey(15)
             if key == 27: break
+    #text file oder json file        
     text_path = os.path.dirname(imagePath) + '/keypoints.txt'
-    print("Path: " , text_path)
-    print("list: ", list_keypoints)
+    json_path = os.path.dirname(imagePath) + '/keypoints.json'
 
     
     # check missing pics from YOLO and create empty list
     path_list = []
     if len(imagePaths) != 21:
-        print("Bild fehlt")
         for i in imagePaths:
             if i[-6] is '/':
                 x = i[-5]
@@ -129,19 +124,23 @@ try:
                 x = i[-6:-4]
             path_list.append(int(x))
     #fill the list for missing pics with empty arrays
-        print("Path_list: ", path_list)
         missing = [ele for ele in range(22) if ele not in path_list]
         missing_keypoints = np.zeros(shape=(75))
         keypoint_missing = missing_keypoints.tolist()
         missing.remove(0)
-        print("missing :", missing)
         
         for index in missing:
-            print("index: ", index-1)
-            print("keypoints: ", keypoint_missing)
             list_keypoints.insert(index-1, keypoint_missing)
-        print("list: ", list_keypoints)
+            keypoints_array = np.insert(keypoints_array, (index-1)*75, missing_keypoints)
 
+
+#Json File
+    #with open(json_path, "w") as fp:
+        #json.dump(list_keypoints, fp, indent=4)
+    with open(os.path.dirname(imagePath) + '/keypoints.json', "w") as fp:
+        json.dump(keypoints_array.tolist(), fp, indent=4)
+    
+#Text File
     line = str(list_keypoints)
     with open(text_path, 'a') as writefile:
         writefile.write(line)
