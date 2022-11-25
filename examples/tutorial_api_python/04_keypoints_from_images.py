@@ -113,7 +113,7 @@ try:
     text_path = os.path.dirname(imagePath) + '/keypoints.txt'
     json_path = os.path.dirname(imagePath) + '/keypoints.json'
 
-    
+    """ Kommentieren, da aktuell nur ein Bild detektiert wird
     # check missing pics from YOLO and create empty list
     path_list = []
     if len(imagePaths) != 21:
@@ -132,7 +132,7 @@ try:
         for index in missing:
             list_keypoints.insert(index-1, keypoint_missing)
             keypoints_array = np.insert(keypoints_array, (index-1)*75, missing_keypoints)
-
+    """
 
 #Json File
     #with open(json_path, "w") as fp:
